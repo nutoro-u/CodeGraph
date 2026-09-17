@@ -38,6 +38,7 @@ namespace CodeGraph.Editor
 			GridBackground background = new GridBackground();
 			background.name = "Grid";
 			Add(background);
+			background.SendToBack();
 
 			this.AddManipulator(new ContentDragger());
 			this.AddManipulator(new SelectionDragger());
