@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace CodeGraph.Editor
@@ -17,11 +18,19 @@ namespace CodeGraph.Editor
 		public List<CodeGraphEditorNode> m_graphNodes;
 		public Dictionary<string, CodeGraphEditorNode> m_nodeDictionary;
 
+		private CodeGraphWindowSearchProvider m_searchProvider;
+
 		public CodeGraphView(SerializedObject serializedObject, CodeGraphEditorWindow window)
 		{
 			m_serializedObject = serializedObject;
 			m_codeGraph = (CodeGraphAsset)serializedObject.targetObject;
 			m_window = window;
+
+			m_graphNodes = new List<CodeGraphEditorNode>();
+			m_nodeDictionary = new Dictionary<string, CodeGraphEditorNode>();
+			m_searchProvider = ScriptableObject.CreateInstance<CodeGraphWindowSearchProvider>();
+			m_searchProvider.graph = this;
+			this.nodeCreationRequest = ShowSearchWindow;
 
 			StyleSheet style = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/CodeGraph/Scripts/Editor/USS/CodeGraphEditor.uss");
 			styleSheets.Add(style);
@@ -34,6 +43,12 @@ namespace CodeGraph.Editor
 			this.AddManipulator(new SelectionDragger());
 			this.AddManipulator(new RectangleSelector());
 			this.AddManipulator(new ClickSelector());
+		}
+
+		private void ShowSearchWindow(NodeCreationContext context)
+		{
+			m_searchProvider.target = (VisualElement)focusController.focusedElement;
+			SearchWindow.Open(new SearchWindowContext(context.screenMousePosition), m_searchProvider);
 		}
 
 		public void Add(CodeGraphNode node)
@@ -51,6 +66,9 @@ namespace CodeGraph.Editor
 
 			CodeGraphEditorNode editorNode = new CodeGraphEditorNode();
 			editorNode.SetPosition(node.Position);
+			m_graphNodes.Add(editorNode);
+			m_nodeDictionary.Add(node.Id, editorNode);
+
 			AddElement(editorNode);
 		}
 	}
